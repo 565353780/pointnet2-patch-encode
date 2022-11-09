@@ -38,6 +38,7 @@ class ClassMsg(nn.Module):
             xyz = xyz[:, :3, :]
         else:
             norm = None
+
         l1_xyz, l1_points = self.sa1(xyz, norm)
         l2_xyz, l2_points = self.sa2(l1_xyz, l1_points)
         _, l3_points = self.sa3(l2_xyz, l2_points)
@@ -46,7 +47,6 @@ class ClassMsg(nn.Module):
         x = self.drop2(F.relu(self.bn2(self.fc2(x))))
         x = self.fc3(x)
         x = F.log_softmax(x, -1)
-
         return x, l3_points
 
 
@@ -55,7 +55,6 @@ class get_loss(nn.Module):
     def __init__(self):
         super(get_loss, self).__init__()
 
-    def forward(self, pred, target, trans_feat):
+    def forward(self, pred, target):
         total_loss = F.nll_loss(pred, target)
-
         return total_loss
