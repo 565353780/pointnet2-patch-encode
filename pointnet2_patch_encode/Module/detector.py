@@ -10,7 +10,7 @@ from pointnet2_patch_encode.Model.class_msg import ClassMsg
 class Detector(object):
 
     def __init__(self):
-        self.model = ClassMsg(936, False).cuda()
+        self.model = ClassMsg().cuda()
         self.model.eval()
         return
 
