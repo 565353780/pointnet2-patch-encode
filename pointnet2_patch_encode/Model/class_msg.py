@@ -24,17 +24,16 @@ class ClassMsg(nn.Module):
         self.decoder = ResNetDecoder(feature_size, relu_in=True)
         return
 
-    def forward(self, xyz):
-        l3_points = self.encoder(xyz)
-        x = self.decoder(l3_points)
-        return x, l3_points
+    def loss(self, data):
+        data['losses']['loss_occ'] = 0
+        return data
 
+    def forward(self, data):
+        data['predictions']['encode'] = self.encoder(
+            data['inputs']['point_array'])
+        data['predictions']['feature'] = self.decoder(
+            data['predictions']['encode'])
 
-class get_loss(nn.Module):
-
-    def __init__(self):
-        super(get_loss, self).__init__()
-
-    def forward(self, pred, target):
-        total_loss = F.nll_loss(pred, target)
-        return total_loss
+        if self.training:
+            data = self.loss(data)
+        return data
