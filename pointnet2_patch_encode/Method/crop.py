@@ -22,7 +22,8 @@ def getCropPointArray(point_array, bbox):
 
 def getCropPointArrayList(point_array,
                           crop_patch_size=0.1,
-                          crop_patch_move_step=0.05):
+                          crop_patch_move_step=0.05,
+                          crop_min_point_num=1):
     crop_patch_num = ceil(1.0 / crop_patch_move_step)
     start_center_value = 0.5 * crop_patch_move_step
 
@@ -40,7 +41,8 @@ def getCropPointArrayList(point_array,
                 max_point = center + crop_patch_size / 0.5
                 bbox = BBox.fromList([min_point, max_point])
                 crop_point_array = getCropPointArray(point_array, bbox)
-                if crop_point_array.shape[0] > 0:
-                    crop_point_array_list.append(crop_point_array)
-                    crop_bbox_list.append(bbox)
+                if crop_point_array.shape[0] < crop_min_point_num:
+                    continue
+                crop_point_array_list.append(crop_point_array)
+                crop_bbox_list.append(bbox)
     return crop_point_array_list, crop_bbox_list
