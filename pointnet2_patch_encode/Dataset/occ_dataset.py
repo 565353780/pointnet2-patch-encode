@@ -1,18 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import random
-from copy import deepcopy
-
 import numpy as np
 import open3d as o3d
 import torch
+from tqdm import tqdm
 from torch.utils.data import Dataset
 
-from pointnet2_patch_encode.Data.bbox import BBox
-
+from pointnet2_patch_encode.Method.crop import getCropPointArrayList
+from pointnet2_patch_encode.Method.occ import getPointArrayOccWithPool
 from pointnet2_patch_encode.Method.sample import getSamplePointArray
-from pointnet2_patch_encode.Method.occ import getPointArrayOcc
 
 
 class OccDataset(Dataset):
@@ -28,13 +25,15 @@ class OccDataset(Dataset):
         # collect all scene-object udf files as list-dict
         self.scannet_scene_name = None
         self.points_list = []
-        self.test_points_list = []
+        self.bbox_list = []
+        self.occ_list = []
         return
 
     def reset(self):
         self.scannet_scene_name = None
         self.points_list = []
-        self.test_points_list = []
+        self.bbox_list = []
+        self.occ_list = []
         return True
 
     def loadScene(self, scannet_scene_name):
@@ -42,6 +41,8 @@ class OccDataset(Dataset):
 
         self.reset()
 
+        sample_patch_size = 0.1
+        sample_patch_move_step = 0.05
         sample_scale = 0.5
 
         self.scannet_scene_name = scannet_scene_name
@@ -62,21 +63,29 @@ class OccDataset(Dataset):
             sample_object_points = getSamplePointArray(object_points,
                                                        sample_scale)
 
-            self.points_list.append(sample_object_points)
-            self.test_points_list.append(sample_object_points.reshape(
-                1, -1, 3))
+            crop_points_list, crop_bbox_list = getCropPointArrayList(
+                sample_object_points, sample_patch_size,
+                sample_patch_move_step)
+
+            if len(crop_points_list) > 0:
+                self.points_list += crop_points_list
+                self.bbox_list += crop_bbox_list
+                crop_occ_list = getPointArrayOccWithPool(crop_points_list, crop_bbox_list)
+                self.occ_list += crop_occ_list
 
             cad_mesh = o3d.io.read_triangle_mesh(shapenet_model_file_path)
             pcd = cad_mesh.sample_points_uniformly(20000)
             cad_points = np.array(pcd.points)
             sample_cad_points = getSamplePointArray(cad_points, sample_scale)
 
-            self.points_list.append(sample_cad_points)
-            self.test_points_list.append(sample_cad_points.reshape(1, -1, 3))
+            crop_points_list, crop_bbox_list = getCropPointArrayList(
+                sample_cad_points, sample_patch_size, sample_patch_move_step)
 
-            bbox = BBox.fromList([[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]])
-            occ = getPointArrayOcc(sample_cad_points, bbox)
-            exit()
+            if len(crop_points_list) > 0:
+                self.points_list += crop_points_list
+                self.bbox_list += crop_bbox_list
+                crop_occ_list = getPointArrayOccWithPool(crop_points_list, crop_bbox_list)
+                self.occ_list += crop_occ_list
         return True
 
     def loadSceneByIdx(self, scannet_scene_name_idx):
