@@ -119,32 +119,26 @@ class Trainer(object):
         renameFile(tmp_save_model_file_path, save_model_file_path)
         return True
 
-    def loadScene(self, scannet_scene_name):
+    def loadScene(self, scannet_scene_name, print_progress=False):
         assert scannet_scene_name in self.scannet_scene_name_list
 
         if self.scannet_scene_name == scannet_scene_name:
             return True
 
         self.scannet_scene_name = scannet_scene_name
-        self.occ_dataset.loadScene(self.scannet_scene_name)
+        self.occ_dataset.loadScene(self.scannet_scene_name, print_progress)
         return True
 
-    def loadSceneByIdx(self, scannet_scene_name_idx):
+    def loadSceneByIdx(self, scannet_scene_name_idx, print_progress=False):
         assert scannet_scene_name_idx <= len(self.scannet_scene_name_list)
 
         return self.loadScene(
-            self.scannet_scene_name_list[scannet_scene_name_idx])
-
-    def processData(self, point_array):
-        data = {'inputs': {}, 'predictions': {}, 'losses': {}, 'logs': {}}
-
-        data['inputs']['point_array'] = torch.tensor(
-            point_array.astype(np.float32)).transpose(2, 1).cuda()
-
-        return data
+            self.scannet_scene_name_list[scannet_scene_name_idx],
+            print_progress)
 
     def testTrain(self, print_progress=False):
         data = self.occ_dataset.__getitem__(0, True)
+        print(data['inputs']['point_array'].shape)
         toCuda(data)
         data = self.model(data)
 
@@ -194,30 +188,21 @@ class Trainer(object):
         self.optimizer.step()
         return True
 
-    def trainScene(self,
-                   scannet_scene_name,
-                   scene_epoch,
-                   print_progress=False):
+    def trainScene(self, scannet_scene_name, print_progress=False):
         self.loadScene(scannet_scene_name)
 
-        for_data = range(scene_epoch)
+        for_data = self.occ_dataloader
         if print_progress:
             for_data = tqdm(for_data)
-        for _ in for_data:
-            torch.cuda.empty_cache()
-            for data in self.occ_dataloader:
-                self.trainStep(data)
-                self.step += 1
+        for data in for_data:
+            self.trainStep(data)
+            self.step += 1
 
         self.saveModel("./output/" + self.log_folder_name + "/model_last.pth")
         #  self.saveResult(print_progress)
         return True
 
-    def trainEpoch(self,
-                   global_epoch_idx,
-                   global_epoch,
-                   scene_epoch,
-                   print_progress=False):
+    def trainEpoch(self, global_epoch_idx, global_epoch, print_progress=False):
         scannet_scene_name_list = self.dataset_manager.getScanNetSceneNameList(
         )
         for scannet_scene_name_idx, scannet_scene_name in enumerate(
@@ -233,16 +218,14 @@ class Trainer(object):
                       str(global_epoch) + ", scene: " +
                       str(scannet_scene_name_idx + 1) + "/" +
                       str(len(scannet_scene_name_list)) + "...")
-            self.trainScene(scannet_scene_name, scene_epoch, print_progress)
+            self.trainScene(scannet_scene_name, print_progress)
         return True
 
     def train(self, print_progress=False):
-        global_epoch = 10000
-        scene_epoch = 100
+        global_epoch = 10000000
 
         for global_epoch_idx in range(global_epoch):
-            self.trainEpoch(global_epoch_idx, global_epoch, scene_epoch,
-                            print_progress)
+            self.trainEpoch(global_epoch_idx, global_epoch, print_progress)
         return True
 
     def testScene(self, scannet_scene_name):
