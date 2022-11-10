@@ -18,7 +18,7 @@ class Detector(object):
         data = {'inputs': {}, 'predictions': {}, 'losses': {}, 'logs': {}}
 
         data['inputs']['point_array'] = torch.tensor(
-            point_array.astype(np.float32)).transpose(2, 1).cuda()
+            point_array.astype(np.float32)).cuda()
 
         data = self.model(data)
         return data
