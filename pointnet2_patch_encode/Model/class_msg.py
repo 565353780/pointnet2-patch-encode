@@ -22,7 +22,7 @@ class ClassMsg(nn.Module):
                                min_mlp_channel, feature_size, normal_channel)
         self.decoder = ResNetDecoder(feature_size, relu_in=True)
 
-        self.mse_loss = nn.MSELoss(reduce=True, size_average=False)
+        self.mse_loss = nn.MSELoss(reduction='sum')
         return
 
     def loss(self, data):
@@ -31,8 +31,14 @@ class ClassMsg(nn.Module):
         return data
 
     def forward(self, data):
+        bbox = data['inputs']['bbox']
+        bbox_center = (bbox[:, 0] + bbox[:, 1]) / 2.0
+        data['predictions']['unit_point_array'] = (
+            data['inputs']['point_array'] - bbox_center).transpose(2, 1)
+
         data['predictions']['encode'] = self.encoder(
-            data['inputs']['point_array'])
+            data['predictions']['unit_point_array'])
+
         data['predictions']['feature'] = self.decoder(
             data['predictions']['encode'])
 

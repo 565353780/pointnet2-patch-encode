@@ -144,8 +144,7 @@ class OccDataset(Dataset):
 
         if test:
             data['inputs']['point_array'] = torch.tensor(
-                self.points_list[index].reshape(1, -1, 3).astype(
-                    np.float32)).transpose(2, 1)
+                self.points_list[index].reshape(1, -1, 3).astype(np.float32))
             data['inputs']['bbox'] = torch.tensor(
                 self.bbox_list[index].toArray().reshape(1, 2,
                                                         3).astype(np.float32))
@@ -153,7 +152,7 @@ class OccDataset(Dataset):
                 1, 1, 32, 32, 32).astype(np.float32))
         else:
             data['inputs']['point_array'] = torch.tensor(
-                self.points_list[index].astype(np.float32)).transpose(1, 0)
+                self.points_list[index].astype(np.float32))
             data['inputs']['bbox'] = torch.tensor(
                 self.bbox_list[index].toArray().astype(np.float32))
             data['inputs']['occ'] = torch.tensor(self.occ_list[index].reshape(
