@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from time import time
+from datetime import datetime
 
 
-def timeit(tag, t):
-    print("{}: {}s".format(tag, time() - t))
-    return time()
+def getCurrentTime():
+    now = datetime.now()
+    return now.strftime("%Y%m%d_%H:%M:%S")
