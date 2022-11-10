@@ -15,6 +15,10 @@ class Detector(object):
         return
 
     def detect(self, point_array):
-        inputs = torch.tensor(point_array.astype(np.float32)).transpose(2, 1).cuda()
-        pred, trans_feat = self.model(inputs)
-        return pred, trans_feat
+        data = {'inputs': {}, 'predictions': {}, 'losses': {}, 'logs': {}}
+
+        data['inputs']['point_array'] = torch.tensor(
+            point_array.astype(np.float32)).transpose(2, 1).cuda()
+
+        data = self.model(data)
+        return data
