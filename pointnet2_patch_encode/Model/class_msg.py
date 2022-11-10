@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import torch.nn as nn
-import torch.nn.functional as F
 
 from pointnet2_patch_encode.Model.encoder import Encoder
 from pointnet2_patch_encode.Model.resnet_decoder import ResNetDecoder
@@ -22,10 +21,13 @@ class ClassMsg(nn.Module):
         self.encoder = Encoder(min_radius, min_sample_point_num,
                                min_mlp_channel, feature_size, normal_channel)
         self.decoder = ResNetDecoder(feature_size, relu_in=True)
+
+        self.mse_loss = nn.MSELoss(reduce=True, size_average=False)
         return
 
     def loss(self, data):
-        data['losses']['loss_occ'] = 0
+        data['losses']['loss_occ'] = self.mse_loss(
+            data['inputs']['occ'], data['predictions']['feature'])
         return data
 
     def forward(self, data):
