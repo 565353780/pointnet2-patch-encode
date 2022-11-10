@@ -54,19 +54,29 @@ def getPointArrayOcc(point_array, bbox, occ_size=32, render=False):
     return occ
 
 
-def getPointArrayOccWithInputs(inputs):
+def getPointArrayOccWithPool(inputs):
     point_array, bbox, occ_size = inputs
     return getPointArrayOcc(point_array, bbox, occ_size)
 
 
-def getPointArrayOccWithPool(point_array_list, bbox_list, occ_size=32):
+def getPointArrayOccListWithPool(point_array_list,
+                                 bbox_list,
+                                 occ_size=32,
+                                 print_progress=False):
     assert len(point_array_list) > 0
 
     inputs_list = []
     for point_array, bbox in zip(point_array_list, bbox_list):
         inputs_list.append([point_array, bbox, occ_size])
-    with Pool(os.cpu_count()) as pool:
-        result = list(
-            tqdm(pool.imap(getPointArrayOccWithInputs, inputs_list),
-                 total=len(inputs_list)))
+
+    if print_progress:
+        print("[INFO][occ::getPointArrayOccListWithPool]")
+        print("\t start get point array occ with pool...")
+        with Pool(os.cpu_count()) as pool:
+            result = list(
+                tqdm(pool.imap(getPointArrayOccWithPool, inputs_list),
+                     total=len(inputs_list)))
+    else:
+        with Pool(os.cpu_count()) as pool:
+            result = list(pool.imap(getPointArrayOccWithPool, inputs_list))
     return result
