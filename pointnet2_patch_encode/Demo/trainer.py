@@ -14,11 +14,20 @@ from pointnet2_patch_encode.Module.trainer import Trainer
 
 
 def demo():
+    model_file_path = "./output/0/model_last.pth"
     print_progress = True
 
-    scannet_scene_name = "scene0474_02"
+    trainer = Trainer()
+    trainer.loadModel(model_file_path)
+    trainer.train(print_progress)
+    return True
+
+
+def demo_test():
+    model_file_path = "./output/0/model_last.pth"
 
     trainer = Trainer()
-    trainer.loadScene(scannet_scene_name)
-    trainer.testTrain(print_progress)
+    trainer.loadModel(model_file_path)
+    trainer.testScene("scene0474_02")
+    #  trainer.test(print_progress)
     return True
