@@ -9,20 +9,39 @@ from pointnet2_patch_encode.Model.utils.set_abstraction_msg import SetAbstractio
 
 class Encoder(nn.Module):
 
-    def __init__(self, feature_size=1024, normal_channel=True):
+    def __init__(self,
+                 min_radius=0.01,
+                 min_sample_point_num=1,
+                 min_mlp_channel=4,
+                 feature_size=128,
+                 normal_channel=True):
         super(Encoder, self).__init__()
+
         self.feature_size = feature_size
         self.normal_channel = normal_channel
 
         in_channel = 3 if normal_channel else 0
         self.sa1 = SetAbstractionMsg(
-            512, [0.1, 0.2, 0.4], [16, 32, 128], in_channel,
-            [[32, 32, 64], [64, 64, 128], [64, 96, 128]])
+            min_sample_point_num * 32,
+            [min_radius, min_radius * 2, min_radius * 4], [
+                min_sample_point_num, min_sample_point_num * 2,
+                min_sample_point_num * 8
+            ], in_channel,
+            [[min_mlp_channel, min_mlp_channel, min_mlp_channel * 2],
+             [min_mlp_channel * 2, min_mlp_channel * 2, min_mlp_channel * 4],
+             [min_mlp_channel * 2, min_mlp_channel * 3, min_mlp_channel * 4]])
         self.sa2 = SetAbstractionMsg(
-            128, [0.2, 0.4, 0.8], [32, 64, 128], 320,
-            [[64, 64, 128], [128, 128, 256], [128, 128, 256]])
-        self.sa3 = SetAbstraction(None, None, None, 640 + 3,
-                                  [256, 512, feature_size], True)
+            min_sample_point_num * 8,
+            [min_radius * 2, min_radius * 4, min_radius * 8], [
+                min_sample_point_num * 2, min_sample_point_num * 4,
+                min_sample_point_num * 8
+            ], min_mlp_channel * 10,
+            [[min_mlp_channel * 2, min_mlp_channel * 2, min_mlp_channel * 4],
+             [min_mlp_channel * 4, min_mlp_channel * 4, min_mlp_channel * 8],
+             [min_mlp_channel * 4, min_mlp_channel * 4, min_mlp_channel * 8]])
+        self.sa3 = SetAbstraction(
+            None, None, None, min_mlp_channel * 20 + 3,
+            [min_mlp_channel * 8, min_mlp_channel * 16, feature_size], True)
         return
 
     def forward(self, xyz):

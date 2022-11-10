@@ -10,11 +10,17 @@ from pointnet2_patch_encode.Model.resnet_decoder import ResNetDecoder
 
 class ClassMsg(nn.Module):
 
-    def __init__(self, feature_size=1024, normal_channel=False):
+    def __init__(self,
+                 min_radius=0.01,
+                 min_sample_point_num=1,
+                 min_mlp_channel=4,
+                 feature_size=128,
+                 normal_channel=False):
         super(ClassMsg, self).__init__()
         self.feature_size = feature_size
 
-        self.encoder = Encoder(feature_size, normal_channel)
+        self.encoder = Encoder(min_radius, min_sample_point_num,
+                               min_mlp_channel, feature_size, normal_channel)
         self.decoder = ResNetDecoder(feature_size, relu_in=True)
         return
 
