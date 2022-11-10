@@ -45,6 +45,8 @@ class Encoder(nn.Module):
         return
 
     def forward(self, xyz):
+        xyz = xyz.transpose(2, 1)
+
         B = xyz.shape[0]
 
         if self.normal_channel:

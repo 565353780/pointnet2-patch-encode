@@ -31,13 +31,17 @@ class ClassMsg(nn.Module):
         return data
 
     def forward(self, data):
+
         bbox = data['inputs']['bbox']
         bbox_center = (bbox[:, 0] + bbox[:, 1]) / 2.0
         data['predictions']['unit_point_array'] = (
-            data['inputs']['point_array'] - bbox_center).transpose(2, 1)
+            data['inputs']['point_array'] - bbox_center)
 
         data['predictions']['encode'] = self.encoder(
             data['predictions']['unit_point_array'])
+
+        #  data['predictions']['encode'] = self.encoder(
+            #  data['inputs']['point_array'])
 
         data['predictions']['feature'] = self.decoder(
             data['predictions']['encode'])
