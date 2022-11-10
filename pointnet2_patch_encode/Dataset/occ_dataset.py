@@ -9,7 +9,10 @@ import open3d as o3d
 import torch
 from torch.utils.data import Dataset
 
+from pointnet2_patch_encode.Data.bbox import BBox
+
 from pointnet2_patch_encode.Method.sample import getSamplePointArray
+from pointnet2_patch_encode.Method.occ import getPointArrayOcc
 
 
 class OccDataset(Dataset):
@@ -64,12 +67,16 @@ class OccDataset(Dataset):
                 1, -1, 3))
 
             cad_mesh = o3d.io.read_triangle_mesh(shapenet_model_file_path)
-            pcd = cad_mesh.sample_points_uniformly(2000000)
+            pcd = cad_mesh.sample_points_uniformly(20000)
             cad_points = np.array(pcd.points)
             sample_cad_points = getSamplePointArray(cad_points, sample_scale)
 
             self.points_list.append(sample_cad_points)
             self.test_points_list.append(sample_cad_points.reshape(1, -1, 3))
+
+            bbox = BBox.fromList([[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]])
+            occ = getPointArrayOcc(sample_cad_points, bbox)
+            exit()
         return True
 
     def loadSceneByIdx(self, scannet_scene_name_idx):
