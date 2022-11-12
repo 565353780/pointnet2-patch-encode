@@ -140,7 +140,7 @@ class OccDataset(Dataset):
     def __getitem__(self, index, test=False):
         assert self.scannet_scene_name is not None
 
-        assert index <= len(self.points_list)
+        assert index < len(self.points_list)
 
         data = {'inputs': {}, 'predictions': {}, 'losses': {}, 'logs': {}}
 
