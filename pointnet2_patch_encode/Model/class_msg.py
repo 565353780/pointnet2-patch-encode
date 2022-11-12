@@ -34,14 +34,16 @@ class ClassMsg(nn.Module):
 
         bbox = data['inputs']['bbox']
         bbox_center = (bbox[:, 0] + bbox[:, 1]) / 2.0
-        data['predictions']['unit_point_array'] = (
-            data['inputs']['point_array'] - bbox_center)
+        unit_point_array = data['inputs']['point_array']
+        for i in range(unit_point_array.shape[1]):
+            unit_point_array[:, i, :] -= bbox_center
+        data['predictions']['unit_point_array'] = unit_point_array
 
         data['predictions']['encode'] = self.encoder(
             data['predictions']['unit_point_array'])
 
         #  data['predictions']['encode'] = self.encoder(
-            #  data['inputs']['point_array'])
+        #  data['inputs']['point_array'])
 
         data['predictions']['feature'] = self.decoder(
             data['predictions']['encode'])

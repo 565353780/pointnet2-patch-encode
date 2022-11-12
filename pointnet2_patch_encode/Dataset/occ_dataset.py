@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import os
-import torch
 import pickle
+
 import numpy as np
 import open3d as o3d
+import torch
 from torch.utils.data import Dataset
 
 from pointnet2_patch_encode.Method.crop import getCropPointArrayList
 from pointnet2_patch_encode.Method.occ import getPointArrayOccListWithPool
+from pointnet2_patch_encode.Method.point import farthest_point_sample
 from pointnet2_patch_encode.Method.sample import getSamplePointArray
 
 
@@ -151,8 +153,12 @@ class OccDataset(Dataset):
             data['inputs']['occ'] = torch.tensor(self.occ_list[index].reshape(
                 1, 1, 32, 32, 32).astype(np.float32))
         else:
-            data['inputs']['point_array'] = torch.tensor(
-                self.points_list[index].astype(np.float32))
+            point_array = torch.tensor(self.points_list[index].astype(
+                np.float32))
+            sample_point_idx = farthest_point_sample(
+                point_array.reshape(1, -1, 3), 32).reshape(-1)
+            sample_point_array = point_array[sample_point_idx]
+            data['inputs']['point_array'] = sample_point_array
             data['inputs']['bbox'] = torch.tensor(
                 self.bbox_list[index].toArray().astype(np.float32))
             data['inputs']['occ'] = torch.tensor(self.occ_list[index].reshape(

@@ -56,12 +56,12 @@ class Trainer(object):
 
         self.occ_dataset = OccDataset(self.dataset_manager)
         self.occ_dataloader = DataLoader(self.occ_dataset,
-                                         batch_size=1,
+                                         batch_size=24,
                                          shuffle=False,
                                          num_workers=0,
                                          worker_init_fn=_worker_init_fn_)
 
-        self.lr = 1e-3
+        self.lr = 1e-4
         self.step = 0
         self.loss_min = float('inf')
         self.log_folder_name = getCurrentTime()
