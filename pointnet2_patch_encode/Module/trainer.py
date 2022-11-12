@@ -2,25 +2,29 @@
 # -*- coding: utf-8 -*-
 
 import os
-import torch
 import random
+
 import numpy as np
-from tqdm import tqdm
+import torch
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-
-from pointnet2_patch_encode.Model.class_msg import ClassMsg
+from tqdm import tqdm
 
 from pointnet2_patch_encode.Dataset.occ_dataset import OccDataset
-
-from pointnet2_patch_encode.Method.device import toCuda, toCpu, toNumpy
-from pointnet2_patch_encode.Method.time import getCurrentTime
-from pointnet2_patch_encode.Method.path import createFileFolder, renameFile, removeFile
-from pointnet2_patch_encode.Method.io import saveDataList, loadDataList
+from pointnet2_patch_encode.Dataset.simple_occ_dataset import SimpleOccDataset
+from pointnet2_patch_encode.Method.device import toCpu, toCuda, toNumpy
+from pointnet2_patch_encode.Method.io import loadDataList, saveDataList
+from pointnet2_patch_encode.Method.path import (createFileFolder, removeFile,
+                                                renameFile)
 from pointnet2_patch_encode.Method.render import renderDataList
-
+from pointnet2_patch_encode.Method.time import getCurrentTime
+from pointnet2_patch_encode.Model.class_msg import ClassMsg
+from pointnet2_patch_encode.Model.occ_net import OccNet
 from pointnet2_patch_encode.Module.dataset_manager import DatasetManager
+
+mode_list = ['pointnet2', 'occ']
+mode = 'occ'
 
 
 def _worker_init_fn_(worker_id):
@@ -52,16 +56,20 @@ class Trainer(object):
         self.scannet_scene_name_list = self.dataset_manager.getScanNetSceneNameList(
         )
 
-        self.model = ClassMsg().cuda()
+        if mode == 'pointnet2':
+            self.model = ClassMsg().cuda()
+            self.occ_dataset = OccDataset(self.dataset_manager)
+        if mode == 'occ':
+            self.model = OccNet().cuda()
+            self.occ_dataset = SimpleOccDataset()
 
-        self.occ_dataset = OccDataset(self.dataset_manager)
         self.occ_dataloader = DataLoader(self.occ_dataset,
-                                         batch_size=24,
+                                         batch_size=1000,
                                          shuffle=False,
-                                         num_workers=0,
+                                         num_workers=24,
                                          worker_init_fn=_worker_init_fn_)
 
-        self.lr = 1e-4
+        self.lr = 1e-3
         self.step = 0
         self.loss_min = float('inf')
         self.log_folder_name = getCurrentTime()
@@ -224,9 +232,24 @@ class Trainer(object):
     def train(self, print_progress=False):
         global_epoch = 10000000
 
-        for global_epoch_idx in range(global_epoch):
-            self.trainEpoch(global_epoch_idx, global_epoch, print_progress)
-        return True
+        if mode == 'pointnet2':
+            for global_epoch_idx in range(global_epoch):
+                self.trainEpoch(global_epoch_idx, global_epoch, print_progress)
+            return True
+
+        if mode == 'occ':
+            for i in range(global_epoch):
+                print("[INFO][Trainer::train]")
+                print("\t start training epoch", i, "...")
+                for_data = self.occ_dataloader
+                if print_progress:
+                    for_data = tqdm(for_data)
+                for data in for_data:
+                    self.trainStep(data)
+                    self.step += 1
+                self.saveModel("./output/" + self.log_folder_name +
+                               "/model_last.pth")
+            return True
 
     def testScene(self, scannet_scene_name):
         self.model.eval()
