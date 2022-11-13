@@ -69,7 +69,7 @@ class Trainer(object):
                                          num_workers=24,
                                          worker_init_fn=_worker_init_fn_)
 
-        self.lr = 1e-3
+        self.lr = 1e-4
         self.step = 0
         self.loss_min = float('inf')
         self.log_folder_name = getCurrentTime()
