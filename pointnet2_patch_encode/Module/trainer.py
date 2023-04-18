@@ -24,7 +24,7 @@ from pointnet2_patch_encode.Model.occ_net import OccNet
 from pointnet2_patch_encode.Module.dataset_manager import DatasetManager
 
 mode_list = ['pointnet2', 'occ']
-mode = 'occ'
+mode = 'pointnet2'
 
 
 def _worker_init_fn_(worker_id):
@@ -64,7 +64,7 @@ class Trainer(object):
             self.occ_dataset = SimpleOccDataset()
 
         self.occ_dataloader = DataLoader(self.occ_dataset,
-                                         batch_size=1000,
+                                         batch_size=24,
                                          shuffle=False,
                                          num_workers=24,
                                          worker_init_fn=_worker_init_fn_)
@@ -216,8 +216,8 @@ class Trainer(object):
         for scannet_scene_name_idx, scannet_scene_name in enumerate(
                 scannet_scene_name_list):
 
-            # FIXME: for test only
-            #  scannet_scene_name = "scene0474_02"
+            #  FIXME: for test only
+            scannet_scene_name = "scene0474_02"
 
             if print_progress:
                 print("[INFO][Trainer::trainScene]")

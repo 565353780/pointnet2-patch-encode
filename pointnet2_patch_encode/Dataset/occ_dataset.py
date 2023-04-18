@@ -44,10 +44,10 @@ class OccDataset(Dataset):
 
         self.reset()
 
-        crop_patch_size = 0.1
+        crop_patch_size = 0.2
         crop_patch_move_step = 0.05
-        crop_min_point_num = 32
         sample_scale = 0.5
+        crop_min_point_num = 32
 
         self.scannet_scene_name = scannet_scene_name
         self.scannet_scene_object_file_name_list = self.dataset_manager.getScanNetObjectFileNameList(
@@ -56,12 +56,17 @@ class OccDataset(Dataset):
         occ_save_folder_path = "/home/chli/chLi/pointnet2_patch_encode/occ/" + scannet_scene_name + "/"
         os.makedirs(occ_save_folder_path, exist_ok=True)
 
+        rebuild = True
+
         save_idx = 0
         for scannet_scene_object_file_name in self.scannet_scene_object_file_name_list:
             occ_file_path = occ_save_folder_path + str(save_idx) + ".pkl"
 
-            if os.path.exists(occ_file_path):
+            if os.path.exists(occ_file_path) and not rebuild:
                 occ_dict = pickle.load(open(occ_file_path, "rb"))
+                if 'object_points_list' not in occ_dict.keys():
+                    continue
+
                 self.points_list += occ_dict['object_points_list']
                 self.bbox_list += occ_dict['object_bbox_list']
                 self.occ_list += occ_dict['object_occ_list']
@@ -129,6 +134,9 @@ class OccDataset(Dataset):
 
             pickle.dump(occ_dict, open(occ_file_path, "wb"))
             save_idx += 1
+        
+        if rebuild:
+            exit()
         return True
 
     def loadSceneByIdx(self, scannet_scene_name_idx):
